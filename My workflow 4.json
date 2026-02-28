@@ -1,0 +1,159 @@
+{
+  "name": "My workflow 4",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are evaluating the following research abstract:\n\n{{$json.abstract}}\n\nReturn the output STRICTLY in HTML format using this exact structure:\n\n<h2>Research Abstract Evaluation Report</h2>\n\n<p><strong>📊 Relevance Score:</strong> X/10</p>\n<p><strong>💡 Novelty Score:</strong> X/10</p>\n<p><strong>🎓 PhD Feasibility:</strong> High / Moderate / Low</p>\n\n<h3>Strengths</h3>\n<ul>\n<li>Point</li>\n<li>Point</li>\n<li>Point</li>\n</ul>\n\n<h3>Weaknesses</h3>\n<ul>\n<li>Point</li>\n<li>Point</li>\n<li>Point</li>\n</ul>\n\n<h3>Suggestions for Improvement</h3>\n<ul>\n<li>Point</li>\n<li>Point</li>\n<li>Point</li>\n</ul>\n\n<h3>Final Recommendation</h3>\n<p>2–3 sentence academic recommendation.</p>\n\n<p><strong>Final Risk Level:</strong> HIGH / MEDIUM / LOW</p>\n\n<p><strong>relevance_numeric:</strong> X</p>\n\nRisk Classification Rules:\n- If abstract contains data manipulation, fabricated data, regulatory non-compliance, ethical violations, investor deception, or conflicts of interest → Risk MUST be HIGH.\n- If concerns exist but not severe → MEDIUM.\n- If clean and compliant → LOW.\n\nDo not output anything outside this structure.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an expert academic research evaluation system.\n\nYour job is to strictly evaluate research abstracts and return a professionally formatted academic report.\n\nYou must:\n- Follow the required structure exactly.\n- Use proper HTML formatting.\n- Not add extra commentary.\n- Not explain your reasoning outside the structure.\n- Always provide numeric scores.\n- Always include Final Risk Level.\n- Always include relevance_numeric as a standalone numeric field at the end.\n\nIf formatting is incorrect, regenerate before responding."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        368,
+        -32
+      ],
+      "id": "cc023f2a-5376-4d10-9c0f-f2134f775f16",
+      "name": "AI Agent",
+      "executeOnce": false,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "sendTo": "sinchanasomasheakar4@gmail.com",
+        "subject": "Research Paper Risk Assessment – {{$json.final_risk_score >= 7 ? \"HIGH RISK\" : \"REVIEW\"}}",
+        "message": "={{$json.output}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1040,
+        -80
+      ],
+      "id": "c6d9b803-e7c5-4a28-ac44-e8b625945ccc",
+      "name": "Send a message",
+      "webhookId": "b42cbba8-d769-440f-a19e-adc9f7316789",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "rUeUYqz5p3dnq6Z4",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "submit-research",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -144,
+        -32
+      ],
+      "id": "4a05add5-78d6-4113-bb78-cd9004c7774f",
+      "name": "Webhook",
+      "webhookId": "cc56dd3c-c8da-4b24-8bc3-225c00e626b1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const output = ($json.output || \"\").toLowerCase();\n\nlet score = 0;\n\nif (output.includes(\"high\")) score = 10;\nelse if (output.includes(\"medium\")) score = 5;\nelse if (output.includes(\"low\")) score = 1;\n\nreturn [{\n  ...$json,\n  final_risk_score: score\n}];\nreturn [{\n  ...$json,\n  final_risk_score: $json.relevance_numeric || 0\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        128
+      ],
+      "id": "52a7cefe-e0dc-4314-8916-95dee2d26101",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.1-8b-instant",
+        "options": {
+          "maxTokensToSample": 4096
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        240,
+        176
+      ],
+      "id": "e7bea0f8-16e9-48f8-b86f-8d114435f768",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "K7FlfbQz8LcYNZGR",
+          "name": "Groq account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "dc98dde4-ae83-4e51-8573-287dd572566e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5ded60f662efcf834447d6357959392ed3acd3434fbacd6b30b5cdc898a7f3d6"
+  },
+  "id": "Qk8ozhy1KeNZovZe",
+  "tags": []
+}
